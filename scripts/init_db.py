@@ -90,3 +90,11 @@ def create_schema():
         (2, 'Curb Mobility, LLC')
     ]
     cursor.executemany("INSERT OR IGNORE INTO vendors (VendorID, vendor_name) VALUES (?, ?)", vendors)
+
+    # commit changes and close the connection
+    conn.commit()
+    conn.close()
+    print("Database creation and initialization complete.")
+
+if __name__ == "__main__":
+    create_schema()
