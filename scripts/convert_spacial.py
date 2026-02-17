@@ -25,3 +25,16 @@ def convert_shapefile():
         if gdf.crs and gdf.crs.to_string() != 'EPSG:4326':
             print("   Converting coordinates to Lat/Lon (EPSG:4326)...")
             gdf = gdf.to_crs("EPSG:4326")
+
+        # Save as GeoJSON
+        print(f"   Saving to {OUTPUT_FILE}...")
+        gdf.to_file(OUTPUT_FILE, driver="GeoJSON")
+
+        print("Success! Map data is ready for the Frontend.")
+
+    except Exception as e:
+        print(f"Error during conversion: {e}")
+
+
+if __name__ == "__main__":
+    convert_shapefile()
