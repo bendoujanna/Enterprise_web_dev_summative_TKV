@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYC Taxi Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #1e3c72, #2a5298);
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            padding: 30px 0;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        /* KPI Cards */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .kpi-card h3 {
+            color: #1e3c72;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .kpi-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2a5298;
+        }
+        
+        /* Charts */
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        /* Filters */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        .filters h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group label {
+            font-weight: bold;
+        }
+        
+        .filter-group select {
+            padding: 8px 15px;
+            border: 2px solid #1e3c72;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .filter-group button {
+            padding: 8px 20px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .filter-group button:hover {
+            background: #2a5298;
+        }
+        
+        /* Table */
+        .data-table {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .data-table h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #1e3c72;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>NYC Taxi Analytics Dashboard</h1>
+            <p>Exploring Urban Mobility Patterns - January 2019</p>
+        </header>
+
+        <!-- KPI Cards -->
+        <div class="kpi-section">
+            <div class="kpi-card">
+                <h3>Total Trips</h3>
+                <div class="value" id="total-trips">Loading...</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Average Fare</h3>
+                <div class="value" id="avg-fare">Loading...</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Data Quality</h3>
+                <div class="value" id="quality-score">Loading...</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Total Revenue</h3>
+                <div class="value" id="total-revenue">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <h2>Filter Data</h2>
+            <div class="filter-group">
+                <label>Borough:</label>
+                <select id="borough-filter">
+                    <option value="">All Boroughs</option>
+                    <option value="Manhattan">Manhattan</option>
+                    <option value="Brooklyn">Brooklyn</option>
+                    <option value="Queens">Queens</option>
+                    <option value="Bronx">Bronx</option>
+                    <option value="Staten Island">Staten Island</option>
+                </select>
+                <button onclick="applyFilters()">Apply Filter</button>
+                <button onclick="resetFilters()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-section">
+            <div class="chart-container">
+                <h2>Trip Distribution by Borough</h2>
+                <canvas id="boroughChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Average Speed by Time of Day</h2>
+                <canvas id="speedChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-container">
+                <h2>Hourly Trip Distribution</h2>
+                <canvas id="hourlyChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Revenue by Borough</h2>
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-table">
+            <h2>Most Expensive Trips (Custom Sorted)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Trip ID</th>
+                        <th>Pickup Time</th>
+                        <th>Distance (mi)</th>
+                        <th>Fare ($)</th>
+                        <th>Speed (mph)</th>
+                    </tr>
+                </thead>
+                <tbody id="trips-tbody">
+                    <tr><td colspan="5" class="loading">Loading trips data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // API base URL
+        const API_BASE = 'http://127.0.0.1:5000/api';
+        
+        // Load KPIs
+        function loadKPIs() {
+            // Get summary stats
+            fetch(API_BASE + '/stats/summary')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-trips').textContent = data.total_trips.toLocaleString();
+                    document.getElementById('avg-fare').textContent = '$' + data.avg_fare;
+                })
+                .catch(error => {
+                    console.error('Error loading summary:', error);
+                    document.getElementById('total-trips').textContent = 'Error';
+                    document.getElementById('avg-fare').textContent = 'Error';
+                });
+            
+            // Get quality score
+            fetch(API_BASE + '/stats/quality')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('quality-score').textContent = data.overall_score;
+                })
+                .catch(error => {
+                    console.error('Error loading quality:', error);
+                    document.getElementById('quality-score').textContent = 'Error';
+                });
+            
+            // Get analytics summary
+            fetch(API_BASE + '/analytics/summary')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-revenue').textContent = data.kpis.total_revenue;
+                })
+                .catch(error => {
+                    console.error('Error loading analytics:', error);
+                    document.getElementById('total-revenue').textContent = 'Error';
+                });
+        }
+        
+        // Borough distribution chart
+        function loadBoroughChart() {
+            fetch(API_BASE + '/stats/charts/boroughs')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('boroughChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(item => item.Borough),
+                            datasets: [{
+                                label: 'Number of Trips',
+                                data: data.map(item => item.trip_count),
+                                backgroundColor: [
+                                    '#1e3c72',
+                                    '#2a5298',
+                                    '#4a90e2',
+                                    '#67b7dc',
+                                    '#89c4f4'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading borough chart:', error));
+        }
+        
+        // Speed efficiency chart
+        function loadSpeedChart() {
+            fetch(API_BASE + '/stats/charts/efficiency')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('speedChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.map(item => item.time_of_day),
+                            datasets: [{
+                                label: 'Average Speed (mph)',
+                                data: data.map(item => item.avg_speed),
+                                borderColor: '#1e3c72',
+                                backgroundColor: 'rgba(30, 60, 114, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading speed chart:', error));
+        }
+        
+        // Hourly distribution chart
+        function loadHourlyChart() {
+            fetch(API_BASE + '/analytics/summary')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('hourlyChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.chart_data.map(item => item.hour),
+                            datasets: [{
+                                label: 'Trips per Hour',
+                                data: data.chart_data.map(item => item.trips),
+                                borderColor: '#2a5298',
+                                backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading hourly chart:', error));
+        }
+        
+        // Revenue chart using custom algorithm
+        function loadRevenueChart() {
+            fetch(API_BASE + '/analytics/borough-custom')
+                .then(response => response.json())
+                .then(data => {
+                    const ctx = document.getElementById('revenueChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.data.map(item => item.borough),
+                            datasets: [{
+                                data: data.data.map(item => item.average_fare),
+                                backgroundColor: [
+                                    '#1e3c72',
+                                    '#2a5298',
+                                    '#4a90e2',
+                                    '#67b7dc',
+                                    '#89c4f4'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading revenue chart:', error));
+        }
+        
+        // Load trips table using custom sorting
+        function loadTripsTable(borough = '') {
+            const tbody = document.getElementById('trips-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
+            
+            // Use our custom sorting endpoint
+            let url = API_BASE + '/trips/custom-sort?sort_by=total_amount&limit=20';
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(result => {
+                    const trips = result.data || [];
+                    tbody.innerHTML = '';
+                    
+                    if (trips.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="loading">No trips found</td></tr>';
+                        return;
+                    }
+                    
+                    trips.forEach(trip => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${trip.trip_id}</td>
+                            <td>${trip.pickup_time}</td>
+                            <td>${trip.trip_distance}</td>
+                            <td>$${trip.total_amount}</td>
+                            <td>${trip.speed}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading trips:', error);
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading">Error loading data</td></tr>';
+                });
+        }
+        
+        // Filter functions
+        function applyFilters() {
+            const borough = document.getElementById('borough-filter').value;
+            loadTripsTable(borough);
+        }
+        
+        function resetFilters() {
+            document.getElementById('borough-filter').value = '';
+            loadTripsTable();
+        }
+        
+        // Initialize dashboard when page loads
+        window.onload = function() {
+            console.log('Loading NYC Taxi Dashboard...');
+            loadKPIs();
+            loadBoroughChart();
+            loadSpeedChart();
+            loadHourlyChart();
+            loadRevenueChart();
+            loadTripsTable();
+        };
+    </script>
+</body>
+</html>
