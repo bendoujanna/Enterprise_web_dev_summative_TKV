@@ -78,3 +78,8 @@ def create_schema():
             FOREIGN KEY (DOLocationID) REFERENCES zones(LocationID)
         );
     """)
+ # creating indexes to speed up queries
+    print("Creating indexes...")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pickup ON trips(PULocationID);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_dropoff ON trips(DOLocationID);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_date ON trips(tpep_pickup_datetime);")
