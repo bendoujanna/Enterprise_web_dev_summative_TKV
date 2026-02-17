@@ -25,3 +25,56 @@ def create_schema():
 
     # enable foreigh keys
     cursor.execute("PRAGMA foreign_keys = ON;")
+
+    # TABLES
+
+    # 1. vendors
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vendors (
+           VendorID INTEGER PRIMARY KEY,
+           vendor_name TEXT NOT NULL
+        );
+    """)
+
+    # 2. Zones
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS zones (
+            LocationID INTEGER PRIMARY KEY,
+            Borough TEXT,
+            Zone TEXT,
+            service_zone TEXT       
+        );
+    """)
+
+    # 3. TRIPS
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS trips (
+            trip_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            VendorID INTEGER,
+            PULocationID INTEGER,
+            DOLocationID INTEGER,
+            tpep_pickup_datetime TEXT,
+            tpep_dropoff_datetime TEXT,
+            passenger_count INTEGER,
+            trip_distance DECIMAL(10, 2),
+            RatecodeID INTEGER,
+            store_and_fwd_flag TEXT,
+            payment_type INTEGER,
+            fare_amount DECIMAL(10, 2),
+            extra DECIMAL(10,2),
+            mta_tax DECIMAL(10,2),
+            tip_amount DECIMAL(10, 2),
+            tolls_amount DECIMAL(10,2),
+            improvement_surcharge DECIMAL(10,2),
+            total_amount DECIMAL(10, 2),
+            congestion_surcharge DECIMAL(10,2),
+            trip_duration_seconds INTEGER,
+            average_speed_mph DECIMAL(10,2),
+            time_of_day TEXT,
+            FOREIGN KEY (VendorID) REFERENCES vendors(VendorID),
+            FOREIGN KEY (PULocationID) REFERENCES zones(LocationID),
+            FOREIGN KEY (DOLocationID) REFERENCES zones(LocationID)
+        );
+    """)
