@@ -1,0 +1,209 @@
+## Custom Algorithm Implementation
+
+### The Problem
+We needed a way to sort taxi trip data by different fields (like fare amount or distance) without using Python's built-in `sort()` or `sorted()` functions. The assignment required us to manually implement our own sorting logic to demonstrate understanding of algorithms.
+
+### Our Solution: Bubble Sort
+
+We chose **Bubble Sort** because:
+1. It's straightforward to understand and implement
+2. The logic is clear - compare neighbors and swap if needed
+3. It works well for our use case (sorting 100-1000 records at a time)
+4. Easy to debug if something goes wrong
+
+### How Bubble Sort Works
+
+The algorithm goes through the list multiple times. In each pass:
+1. Compare two items next to each other
+2. If they're in the wrong order, swap them
+3. Move to the next pair
+4. Repeat until no more swaps are needed
+
+**Example:**
+```
+Starting list: [25, 12, 45, 8]
+
+Pass 1:
+[25, 12, 45, 8] → Compare 25 and 12 → Swap
+[12, 25, 45, 8] → Compare 25 and 45 → No swap
+[12, 25, 45, 8] → Compare 45 and 8 → Swap
+[12, 25, 8, 45]
+
+Pass 2:
+[12, 25, 8, 45] → Compare 12 and 25 → No swap
+[12, 25, 8, 45] → Compare 25 and 8 → Swap
+[12, 8, 25, 45] → Compare 25 and 45 → No swap
+
+Pass 3:
+[12, 8, 25, 45] → Compare 12 and 8 → Swap
+[8, 12, 25, 45] → Compare 12 and 25 → No swap
+[8, 12, 25, 45] → Compare 25 and 45 → No swap
+
+Pass 4:
+No swaps needed → List is sorted!
+Final: [8, 12, 25, 45]
+```
+
+### Pseudo-Code
+
+```
+function bubble_sort(list, field_to_sort_by):
+    n = length of list
+    
+    for i from 0 to n:
+        swapped = false
+        
+        for j from 0 to (n - i - 1):
+            current = list[j][field_to_sort_by]
+            next = list[j + 1][field_to_sort_by]
+            
+            if current > next:
+                swap list[j] and list[j + 1]
+                swapped = true
+        
+        if not swapped:
+            break  // List is sorted, stop early
+    
+    return list
+```
+
+### Complexity Analysis
+
+**Time Complexity:**
+- **Best Case:** O(n) - when the list is already sorted
+  - We only need one pass to check
+  - No swaps are made
+  
+- **Average Case:** O(n²)
+  - For a random list, we need multiple passes
+  - Example: 100 items = about 100 × 100 = 10,000 comparisons
+  
+- **Worst Case:** O(n²) - when the list is in reverse order
+  - Need maximum number of passes
+  - Every item needs to "bubble" all the way to its position
+
+**Space Complexity:** O(n)
+- We make a copy of the list to avoid changing the original
+- Extra memory used = size of the input list
+
+### Why Bubble Sort for This Project?
+
+**Advantages:**
+- Simple to implement and understand
+- Our sorting needs are small (usually top 100-1000 trips)
+- Easy to explain and show it's working
+- Stable sort (maintains order of equal elements)
+
+**Trade-offs:**
+- Slower than QuickSort or MergeSort for large datasets
+- Not efficient for millions of records
+- But speed isn't critical for our dashboard use case
+
+### Where We Use It
+
+1. **`/api/trips/custom-sort` endpoint**
+   - Sorts trip data by fare, distance, or speed
+   - Users can see highest/lowest values
+   
+2. **`/api/trips/top-expensive` endpoint**
+   - Finds the N most expensive trips
+   - Uses sorting + selection
+   
+3. **Custom grouping function**
+   - Groups trips by borough
+   - Calculates averages manually (no SQL GROUP BY)
+
+### Implementation Details
+
+**File:** `algorithms.py`
+
+**Main Function:**
+```python
+def my_sort_trips(trip_list, sort_by_field):
+    trips = trip_list.copy()
+    n = len(trips)
+    
+    for i in range(n):
+        swapped = False
+        
+        for j in range(0, n - i - 1):
+            current_value = trips[j][sort_by_field]
+            next_value = trips[j + 1][sort_by_field]
+            
+            if current_value > next_value:
+                temp = trips[j]
+                trips[j] = trips[j + 1]
+                trips[j + 1] = temp
+                swapped = True
+        
+        if not swapped:
+            break
+    
+    return trips
+```
+
+### Testing Results
+
+We tested our algorithm with sample data:
+- Input: [25.50, 12.30, 45.00, 8.75]
+- Expected: [8.75, 12.30, 25.50, 45.00]
+- Result: Correct
+
+Confirmed it works with:
+- Positive and negative numbers
+- Decimal values
+- Lists of different sizes (10, 100, 1000 items)
+
+### Real-World Application
+
+In our system, when a user clicks "Sort by Fare" on the dashboard:
+1. Frontend calls `/api/trips/custom-sort?sort_by=total_amount`
+2. Backend fetches unsorted data from database
+3. Our bubble sort algorithm sorts the trips
+4. Sorted data sent back to frontend
+5. User sees results ordered from cheapest to most expensive
+
+---
+
+## Additional Custom Functions
+
+### Manual Grouping
+We also implemented custom grouping to replace SQL's GROUP BY:
+
+```python
+def group_by_borough(trip_list):
+    borough_counts = {}
+    
+    for trip in trip_list:
+        borough = trip['borough']
+        if borough not in borough_counts:
+            borough_counts[borough] = 0
+        borough_counts[borough] = borough_counts[borough] + 1
+    
+    return borough_counts
+```
+
+**Time Complexity:** O(n) - single pass through data
+**Space Complexity:** O(g) - where g = number of unique groups
+
+This function counts how many trips originate from each borough without using SQL aggregation.
+
+---
+
+## Why This Matters
+
+Building these algorithms from scratch taught us:
+1. How sorting actually works "under the hood"
+2. Time and space complexity trade-offs
+3. When to use simple vs complex algorithms
+4. How to test and verify algorithm correctness
+
+For a production system, we'd probably use more efficient algorithms like QuickSort or the built-in sort functions. But for learning and demonstrating understanding, implementing bubble sort ourselves was valuable.
+
+---
+
+**Files:**
+- `algorithms.py` - Our custom sorting and grouping functions (80 lines)
+- `app.py` - Integration with Flask API (new endpoints at lines 165-245)
+- `test_algorithms.py` - Unit tests to verify correctness
+
