@@ -7,4 +7,11 @@ PROJECT_ROOT = os.path.dirname(BASE_DIR)
 SHP_FILE = os.path.join(PROJECT_ROOT, 'data', 'taxi_zones', 'taxi_zones.shp')
 OUTPUT_FILE = os.path.join(PROJECT_ROOT, 'output', 'taxi_zones.json')
 
+def convert_shapefile():
+    print("Starting Spatial Data Conversion...")
 
+    # Check if input file exists
+    if not os.path.exists(SHP_FILE):
+        print(f"Error: Could not find Shapefile at {SHP_FILE}")
+        print(" Make sure you moved the 'taxi_zones' folder into 'data'")
+        return
